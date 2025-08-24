@@ -12,6 +12,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   String city = "Ulaanbaatar";
   Map<String, dynamic>? weatherData;
   Map<String, dynamic>? forecastData;
+  List<Map<String, dynamic>>? dailyForecast;
+
   bool isLoading = true;
 
   @override
@@ -26,9 +28,11 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
       final current = await _weatherService.getCurrentWeather(city);
       final forecast = await _weatherService.getForecast(city);
 
+      final daily = await _weatherService.getDailyFrom3HourForecast(city);
       setState(() {
         weatherData = current;
         forecastData = forecast;
+        dailyForecast = daily;
         isLoading = false;
       });
     } catch (e) {
@@ -74,8 +78,6 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-
-                      // Температур
                       Text(
                         "${weatherData!['main']['temp'].round()}°C",
                         style: const TextStyle(
@@ -92,28 +94,25 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      // Дэлгэрэнгүй
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           WeatherDetail(
-                            label: "Humidity",
+                            label: "Чийгшил",
                             value: "${weatherData!['main']['humidity']}%",
                           ),
                           WeatherDetail(
-                            label: "Wind",
+                            label: "Салхи",
                             value: "${weatherData!['wind']['speed']} m/s",
                           ),
                           WeatherDetail(
-                            label: "Pressure",
+                            label: "Даралт",
                             value: "${weatherData!['main']['pressure']} hPa",
                           ),
                         ],
                       ),
                       const SizedBox(height: 20),
 
-                      // 🌤 Forecast List
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -124,7 +123,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              "Next Hours",
+                              "Цагаар харах",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -156,6 +155,85 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                 },
                               ),
                             ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "7 Day Forecast",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    itemCount: dailyForecast!.length,
+                                    itemBuilder: (context, index) {
+                                      final item = dailyForecast![index];
+
+                                      final dt = DateTime.parse(item['day']);
+
+                                      final dayName = [
+                                        "Даваа",
+                                        "Мягмар",
+                                        "Лхагва",
+                                        "Пүрэв",
+                                        "Баасан",
+                                        "Бямба",
+                                        "Ням",
+                                      ][dt.weekday - 1];
+
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 20.0,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              dayName,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  item['desc'].contains("Cloud")
+                                                      ? Icons.cloud
+                                                      : Icons.wb_sunny,
+                                                  color: Colors.white,
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Text(
+                                                  "${item['min']}° / ${item['max']}°",
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -168,7 +246,6 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   }
 }
 
-// --- UI Widgets (WeatherDetail, HourlyForecast) нь өмнөх кодон дээрээс ашиглана
 class WeatherDetail extends StatelessWidget {
   final String label;
   final String value;

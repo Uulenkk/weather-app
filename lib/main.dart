@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'weather_home_page.dart'; // Чиний өгсөн файлын нэртэй тааруулна
+import 'weather_home_page.dart';
 
 void main() {
   runApp(const MyApp());
